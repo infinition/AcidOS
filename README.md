@@ -1,5 +1,5 @@
 
-# WebOS Ultimate V6 🖥️
+# AcidOS 🖥️
 
 A fully functional desktop operating system simulator running entirely in the browser.
 **No installation, no build tools, no Node.js required.**
