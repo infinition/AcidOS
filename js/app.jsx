@@ -1201,54 +1201,141 @@ function WebOSUltimateV6() {
     const SearchOverlay = () => {
         if (!isSearchOpen) return null;
         const inputRef = useRef(null);
+        const [selectedIdx, setSelectedIdx] = useState(0);
 
-        useEffect(() => {
-            if (inputRef.current) inputRef.current.focus();
-        }, []);
+        useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
 
         const results = useMemo(() => {
             if (!searchQuery) return [];
             const q = searchQuery.toLowerCase();
             let res = [];
-            items.forEach(item => {
-                if (item.title?.toLowerCase().includes(q)) res.push(item);
-                if (item.children) {
-                    item.children.forEach(child => {
-                        if (child.title?.toLowerCase().includes(q)) res.push({ ...child, parentId: item.id });
-                    });
+
+            // 1. Apps & Widgets
+            const traverse = (list, parent = null) => {
+                list.forEach(item => {
+                    if (item.title?.toLowerCase().includes(q)) {
+                        res.push({ type: 'item', data: item, parent, id: item.id });
+                    }
+                    if (item.children) traverse(item.children, item);
+                });
+            };
+            traverse(items);
+
+            // 2. Windows
+            windows.forEach(win => {
+                if (win.title?.toLowerCase().includes(q)) {
+                    res.push({ type: 'window', data: win, id: 'win-' + win.id });
                 }
             });
+
+            // 3. Settings
+            if ('grid'.includes(q) || 'grille'.includes(q)) res.push({ type: 'setting', action: () => setConfig({ ...config, viewMode: 'grid' }), title: 'Passer en mode Grille', icon: <Grid />, id: 'set-grid' });
+            if ('bureau'.includes(q) || 'desktop'.includes(q)) res.push({ type: 'setting', action: () => setConfig({ ...config, viewMode: 'desktop' }), title: 'Passer en mode Bureau', icon: <Monitor />, id: 'set-desk' });
+            Object.entries(THEMES).forEach(([key, theme]) => {
+                if (theme.name.toLowerCase().includes(q) || 'theme'.includes(q)) {
+                    res.push({ type: 'setting', action: () => setConfig({ ...config, theme: key }), title: `Thème : ${theme.name}`, icon: <Settings />, id: 'set-theme-' + key, previewColor: theme.bg });
+                }
+            });
+
             return res;
-        }, [searchQuery, items]);
+        }, [searchQuery, items, windows, config]);
+
+        const handleSelect = (res) => {
+            if (res.type === 'item') launchItem(res.data);
+            if (res.type === 'window') { focusWindow(res.data.id); if (res.data.isMinimized) minimizeWindow(res.data.id); }
+            if (res.type === 'setting') res.action();
+            setIsSearchOpen(false);
+        };
+
+        const selected = results[selectedIdx] || results[0];
 
         return (
-            <div className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-md flex flex-col items-center pt-20 animate-in fade-in duration-200" onClick={() => setIsSearchOpen(false)}>
-                <div className="w-full max-w-lg px-4" onClick={e => e.stopPropagation()}>
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50" />
+            <div className="fixed inset-0 z-[80] bg-black/60 backdrop-blur-md flex flex-col items-center pt-20 animate-in fade-in duration-200" onClick={() => setIsSearchOpen(false)}>
+                <div className="w-full max-w-3xl px-4 flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+                    {/* Search Bar */}
+                    <div className="relative group">
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-blue-400 transition" size={24} />
                         <input
                             ref={inputRef}
                             value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Rechercher..."
-                            className="w-full bg-white/10 border border-white/20 rounded-2xl py-4 pl-12 pr-4 text-xl text-white placeholder-white/30 focus:outline-none focus:bg-white/20 transition shadow-2xl"
+                            onChange={e => { setSearchQuery(e.target.value); setSelectedIdx(0); }}
+                            onKeyDown={e => {
+                                if (e.key === 'ArrowDown') setSelectedIdx(i => Math.min(i + 1, results.length - 1));
+                                if (e.key === 'ArrowUp') setSelectedIdx(i => Math.max(i - 1, 0));
+                                if (e.key === 'Enter' && selected) handleSelect(selected);
+                                if (e.key === 'Escape') setIsSearchOpen(false);
+                            }}
+                            placeholder="Recherche globale (Apps, Fenêtres, Paramètres...)"
+                            className="w-full bg-slate-800/80 border border-white/10 rounded-2xl py-5 pl-14 pr-4 text-2xl text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-slate-800 transition shadow-2xl"
                         />
                     </div>
 
+                    {/* Results Area */}
                     {results.length > 0 && (
-                        <div className="mt-4 bg-slate-900/90 border border-white/10 rounded-2xl overflow-hidden shadow-2xl max-h-[60vh] overflow-y-auto">
-                            {results.map(item => (
-                                <div key={item.id} onClick={() => { launchItem(item); setIsSearchOpen(false); }}
-                                    className="flex items-center gap-4 p-4 hover:bg-white/10 cursor-pointer border-b border-white/5 last:border-0">
-                                    <div className="text-2xl">{item.icon}</div>
-                                    <div className="flex-1">
-                                        <div className="font-bold text-white">{item.title}</div>
-                                        {item.parentId && <div className="text-xs text-white/40">Dans {items.find(i => i.id === item.parentId)?.title}</div>}
+                        <div className="flex bg-slate-900/90 border border-white/10 rounded-2xl overflow-hidden shadow-2xl h-[500px]">
+                            {/* Left List */}
+                            <div className="w-1/2 border-r border-white/10 overflow-y-auto p-2">
+                                <div className="text-xs font-bold text-slate-500 uppercase px-3 py-2">Résultats ({results.length})</div>
+                                {results.map((res, idx) => (
+                                    <div key={res.id} onClick={() => handleSelect(res)} onMouseEnter={() => setSelectedIdx(idx)}
+                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${idx === selectedIdx ? 'bg-blue-600 text-white' : 'hover:bg-white/5 text-slate-300'}`}>
+                                        <div className="text-xl">
+                                            {res.type === 'item' ? res.data.icon : (res.type === 'setting' ? res.icon : '🪟')}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold truncate">{res.type === 'item' ? res.data.title : (res.type === 'window' ? res.data.title : res.title)}</div>
+                                            <div className="text-xs opacity-60 truncate">
+                                                {res.type === 'item' ? (res.parent ? `Dans ${res.parent.title}` : 'Application') : (res.type === 'window' ? 'Fenêtre ouverte' : 'Paramètre')}
+                                            </div>
+                                        </div>
+                                        {idx === selectedIdx && <div className="text-xs opacity-50">↵</div>}
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
+
+                            {/* Right Preview */}
+                            <div className="w-1/2 bg-slate-950/50 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                                {selected ? (
+                                    <>
+                                        {/* Background Blur Effect */}
+                                        <div className="absolute inset-0 opacity-20 blur-3xl" style={{ backgroundColor: selected.type === 'item' ? selected.data.bgColor : (selected.previewColor || '#3b82f6') }} />
+
+                                        <div className="relative z-10 flex flex-col items-center">
+                                            <div className="text-6xl mb-4 shadow-xl rounded-2xl p-4 bg-white/5 border border-white/10">
+                                                {selected.type === 'item' ? (
+                                                    (selected.data.icon?.startsWith('http') || selected.data.icon?.startsWith('data:image')) ?
+                                                        <img src={selected.data.icon} className="w-16 h-16 object-contain" /> : selected.data.icon
+                                                ) : (selected.type === 'setting' ? selected.icon : '🪟')}
+                                            </div>
+                                            <h2 className="text-2xl font-bold mb-2">{selected.type === 'item' ? selected.data.title : (selected.type === 'window' ? selected.data.title : selected.title)}</h2>
+
+                                            <div className="space-y-2 text-sm text-slate-400 max-w-[80%]">
+                                                {selected.type === 'item' && (
+                                                    <>
+                                                        <p>Type: <span className="text-white capitalize">{selected.data.type}</span></p>
+                                                        {selected.data.url && <p className="truncate text-blue-400">{selected.data.url}</p>}
+                                                        {selected.data.cols && <p>Taille: {selected.data.cols}x{selected.data.rows}</p>}
+                                                    </>
+                                                )}
+                                                {selected.type === 'window' && <p>Fenêtre active (ID: {selected.data.id})</p>}
+                                                {selected.type === 'setting' && <p>Action système rapide</p>}
+                                            </div>
+
+                                            <button onClick={() => handleSelect(selected)} className="mt-8 bg-white text-black px-6 py-2 rounded-full font-bold hover:scale-105 transition">
+                                                Ouvrir
+                                            </button>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-slate-500">Sélectionnez un élément pour voir l'aperçu</div>
+                                )}
+                            </div>
                         </div>
                     )}
+
+                    <div className="text-center text-xs text-slate-500 mt-2">
+                        Utilisez les flèches pour naviguer • Entrée pour ouvrir • Echap pour fermer
+                    </div>
                 </div>
             </div>
         );
@@ -1738,6 +1825,9 @@ function WebOSUltimateV6() {
 
                 <div className={`flex items-center gap-4 ${['left', 'right'].includes(config.barPosition) ? 'flex-col-reverse' : ''}`}>
                     <span className="font-bold text-sm whitespace-nowrap">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <button onClick={() => setIsSearchOpen(true)} className="p-2 hover:bg-white/20 rounded-lg" title="Recherche (Ctrl+K)">
+                        <Search size={20} />
+                    </button>
                     {!isEditing && (
                         <button onClick={() => setIsEditing(true)} className="p-2 hover:bg-white/20 rounded-lg" title="Mode Édition">
                             <Edit3 size={20} />
