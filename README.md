@@ -1,94 +1,79 @@
+# AcidOS
 
-# AcidOS 🖥️
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black) ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black) [![Release](https://img.shields.io/github/v/release/infinition/AcidOS?style=flat)](https://github.com/infinition/AcidOS/releases) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/infinition)
 
-A fully functional desktop operating system simulator running entirely in the browser.
-**No installation, no build tools, no Node.js required.**
+A desktop operating system simulator running entirely in the browser. No installation, no build tools, no Node.js required. Open `index.html` and it works.
 
-<img width="1534" height="1105" alt="image" src="https://github.com/user-attachments/assets/830a4f18-ea85-4616-ad8e-734d19d2c902" />
+<img width="1534" height="1105" alt="AcidOS desktop" src="https://github.com/user-attachments/assets/830a4f18-ea85-4616-ad8e-734d19d2c902" />
 
-Built with **React 18**, **Tailwind CSS**, and **Babel** (Standalone).
+Built with React 18 (via CDN), Tailwind CSS, and Babel Standalone so JSX compiles in the browser at load time.
 
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white) ![React](https://img.shields.io/badge/React-CDN-blue) ![Tailwind](https://img.shields.io/badge/Tailwind-Play-38bdf8)
+---
 
-## ✨ Features
+## Features
 
-* **Zero-Build Architecture:** Just open `index.html`.
-* **Window Manager:** Drag, resize, minimize, maximize windows.
-* **Widgets:** Custom Widgets (HTML CSS JS) + Already created Kanban Board, Mini IDE, Cryptocurrency Tracker, Breathing Exercise, Water Tracker..
-* **Persistence:** Auto-saves layout and data to `localStorage`.
-* **Theming:** Dark/Light/Cyberpunk modes via Tailwind configuration.
-* **Fluid Animations:** Custom animations defined in `tailwind.config.js`.
-  
-<img width="935" height="925" alt="image" src="https://github.com/user-attachments/assets/5c3a066d-d876-4c52-b02c-c9fa69fe7f1e" />
+- Window manager with drag, resize, minimize, and maximize.
+- Built-in widgets: Kanban board, mini IDE, cryptocurrency tracker, breathing exercise, water tracker.
+- Custom widget support: drop in any HTML/CSS/JS block.
+- Layout and data auto-saved to localStorage.
+- Dark, Light, and Cyberpunk themes.
 
-<img width="708" height="906" alt="image" src="https://github.com/user-attachments/assets/a7888349-9409-451e-8773-3d3ff63ff575" />
+<img width="935" height="925" alt="AcidOS widgets" src="https://github.com/user-attachments/assets/5c3a066d-d876-4c52-b02c-c9fa69fe7f1e" />
 
-## 📂 Project Structure
+<img width="708" height="906" alt="AcidOS theme" src="https://github.com/user-attachments/assets/a7888349-9409-451e-8773-3d3ff63ff575" />
 
-Ensure your folder looks exactly like this for the paths to work:
+---
 
-```text
-/project-root
-│
-├── index.html              # Entry point (Load scripts & DOM root)
-├── css/
-│   └── style.css           # Custom scrollbars & body styles
-└── js/
-    ├── app.jsx             # MAIN LOGIC (Paste the React code here)
-    └── tailwind.config.js  # Animation & Theme configuration
-````
+## Running
 
-## 🚀 How to Run
+**Direct open** - double-click `index.html`. Works in Chrome and Edge. Firefox may block some storage APIs on `file://`.
 
-### Method 1: Direct Open (Simple)
+**Local server (recommended)**
 
-Simply double-click **`index.html`** to open it in your web browser.
-*(Note: Some browsers might block ES6 modules or specific storage features on `file://` protocol. If so, use Method 2).*
+```bash
+# Python
+python -m http.server 8080
 
-### Method 2: Local Server (Recommended)
-
-If you have VS Code, install the "Live Server" extension.
-
-1.  Right-click `index.html`.
-2.  Select **"Open with Live Server"**.
-
-## 📝 Configuration
-
-### 1\. The Logic (`js/app.jsx`)
-
-This file contains the entire OS logic (Window manager, Widgets, State).
-
-  * *Note:* The script tag in HTML is `<script type="text/babel" ...>` to allow the browser to compile JSX on the fly.
-
-### 2\. Styling (`js/tailwind.config.js`)
-
-Tailwind is loaded via CDN. The config file extends the theme to add custom animations like the "jiggle" effect (Edit mode).
-
-```javascript
-// Example from js/tailwind.config.js
-tailwind.config = {
-    theme: {
-        extend: {
-            animation: {
-                jiggle: 'jiggle 0.3s infinite alternate',
-            }
-        }
-    }
-}
+# Node
+npx serve .
 ```
 
-## 🛠️ Tech Details
+Or use the Live Server extension in VS Code.
 
-  * **React & ReactDOM:** Loaded via Unpkg (UMD).
-  * **Babel:** Used to transpile JSX inside the browser (`@babel/standalone`).
-  * **Tailwind:** Used via the CDN script, processing classes at runtime.
+---
 
-## ⚠️ Notes
+## File layout
 
-  * **Performance:** Since Babel compiles JSX in the browser on every load, this setup is perfect for prototyping or personal tools but not recommended for heavy production sites.
-  * **Data:** Clearing your browser cache/local storage will reset the desktop.
+```
+index.html              # Entry point
+css/
+  style.css             # Scrollbars and base styles
+js/
+  app.jsx               # Full OS logic (window manager, widgets, state)
+  tailwind.config.js    # Theme and animation configuration
+```
 
-## 📄 License
+---
 
-Open Source. Feel free to modify and distribute.
+## Notes
 
+- Babel compiles JSX in the browser on every load. Fine for personal use, not suited for high-traffic production.
+- Clearing browser localStorage resets the desktop to defaults.
+
+---
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=infinition%2FAcidOS&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=infinition/AcidOS&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=infinition/AcidOS&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=infinition/AcidOS&type=date&legend=top-left" />
+ </picture>
+</a>
+
+---
+
+## License
+
+MIT. See [LICENSE](LICENSE).
